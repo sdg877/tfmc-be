@@ -19,7 +19,6 @@ const userSchema = mongoose.Schema(
       type: Number,
       default: 100,
       min: 0,
-      max: 100,
     },
   },
   {
