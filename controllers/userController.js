@@ -31,13 +31,24 @@ const getProfile = async (req, res) => {
 const updateUserEnergy = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
 
-    user.dailyEnergyLimit = req.body.dailyEnergyLimit;
-    await user.save();
-    res.json(user);
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    if (req.body.dailyEnergyLimit !== undefined) {
+      user.dailyEnergyLimit = req.body.dailyEnergyLimit;
+    }
+
+    if (req.body.settings) {
+      user.settings = { ...user.settings, ...req.body.settings };
+    }
+
+    const updatedUser = await user.save();
+    res.json(updatedUser);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
   }
 };
 
