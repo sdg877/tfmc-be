@@ -17,7 +17,7 @@ const taskSchema = mongoose.Schema(
     },
     category: {
       type: String,
-      enum: ["quickwin", "admin", "physical", "social", "focus", "stress"],
+      enum: ["admin", "physical", "social", "focus", "stress"],
       required: [true, "Please select a category"],
     },
     urgency: {
