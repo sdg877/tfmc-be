@@ -11,6 +11,10 @@ const taskSchema = mongoose.Schema(
       type: String,
       required: [true, "Please add a title"],
     },
+    notes: {
+      type: String,
+      default: "",
+    },
     energyRequired: {
       type: Number,
       default: 3,
@@ -31,6 +35,9 @@ const taskSchema = mongoose.Schema(
     isCompleted: {
       type: Boolean,
       default: false,
+    },
+    completedAt: {
+      type: Date,
     },
     isPlannedForToday: {
       type: Boolean,
