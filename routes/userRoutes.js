@@ -7,18 +7,22 @@ const {
   getProfile,
   connectGoogleCalendar,
   getGoogleEvents,
+  updateUserProfile,
 } = require("../controllers/userController");
 const { protect } = require("../middleware/authMiddleware");
 
-// Authentication Routes
+// Auth
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 
-// Profile & Settings Routes
-router.get("/profile", protect, getProfile);
-router.put("/profile", protect, updateUserEnergy);
+// Profile Identity
+router.put("/profile/identity", protect, updateUserProfile);
+router.put("/profile/energy", protect, updateUserEnergy);
 
-// Google Calendar Integration
+// General Profile
+router.get("/profile", protect, getProfile);
+
+// Google
 router.post("/sync-calendar", protect, connectGoogleCalendar);
 router.get("/calendar-events", protect, getGoogleEvents);
 

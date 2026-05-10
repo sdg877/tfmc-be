@@ -8,7 +8,6 @@ const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "30d" });
 };
 
-// Initialise the Google OAuth2 client
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
@@ -26,7 +25,6 @@ const getProfile = async (req, res) => {
       user.dailyEnergyLimit = 100;
       user.lastResetDate = today;
       await user.save();
-
       await Task.updateMany({ user: user._id }, { isPlannedForToday: false });
     }
 
@@ -36,18 +34,35 @@ const getProfile = async (req, res) => {
   }
 };
 
+const updateUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ msg: "User not found" });
+
+    if (req.body.name) user.name = req.body.name;
+    if (req.body.email) user.email = req.body.email;
+
+    await user.save();
+
+    const updatedUser = await User.findById(req.user.id)
+      .select("-password")
+      .lean();
+
+    return res.status(200).json(updatedUser);
+  } catch (err) {
+    console.error("Backend Error:", err.message);
+    return res.status(500).json({ msg: "Server Error" });
+  }
+};
+
 const updateUserEnergy = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
-
-    if (!user) {
-      return res.status(404).json({ msg: "User not found" });
-    }
+    if (!user) return res.status(404).json({ msg: "User not found" });
 
     if (req.body.dailyEnergyLimit !== undefined) {
       user.dailyEnergyLimit = req.body.dailyEnergyLimit;
     }
-
     if (req.body.settings) {
       user.settings = { ...user.settings, ...req.body.settings };
     }
@@ -63,15 +78,12 @@ const updateUserEnergy = async (req, res) => {
 const connectGoogleCalendar = async (req, res) => {
   try {
     const { code } = req.body;
-
-    if (!code) {
+    if (!code)
       return res
         .status(400)
         .json({ message: "No authorisation code provided" });
-    }
 
     const { tokens } = await oauth2Client.getToken(code);
-
     const updatedUser = await User.findByIdAndUpdate(
       req.user.id,
       {
@@ -95,9 +107,8 @@ const connectGoogleCalendar = async (req, res) => {
 const getGoogleEvents = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
-    if (!user || !user.googleConnected) {
+    if (!user || !user.googleConnected)
       return res.status(400).json({ message: "Google account not linked" });
-    }
 
     oauth2Client.setCredentials({
       access_token: user.googleTokens.accessToken,
@@ -105,7 +116,6 @@ const getGoogleEvents = async (req, res) => {
     });
 
     const calendar = google.calendar({ version: "v3", auth: oauth2Client });
-
     const response = await calendar.events.list({
       calendarId: "primary",
       timeMin: new Date().toISOString(),
@@ -113,7 +123,6 @@ const getGoogleEvents = async (req, res) => {
       singleEvents: true,
       orderBy: "startTime",
     });
-
     res.json(response.data.items);
   } catch (error) {
     console.error("Fetch Events Error:", error);
@@ -145,7 +154,6 @@ const registerUser = async (req, res) => {
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email });
-
   if (user && (await bcrypt.compare(password, user.password))) {
     res.json({
       _id: user.id,
@@ -162,6 +170,7 @@ module.exports = {
   registerUser,
   loginUser,
   getProfile,
+  updateUserProfile,
   updateUserEnergy,
   connectGoogleCalendar,
   getGoogleEvents,
