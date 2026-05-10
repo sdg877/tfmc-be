@@ -2,10 +2,18 @@ const User = require("../models/userModel");
 const Task = require("../models/taskModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { google } = require("googleapis");
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "30d" });
 };
+
+// Initialise the Google OAuth2 client
+const oauth2Client = new google.auth.OAuth2(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  process.env.GOOGLE_REDIRECT_URI,
+);
 
 const getProfile = async (req, res) => {
   try {
@@ -52,6 +60,67 @@ const updateUserEnergy = async (req, res) => {
   }
 };
 
+const connectGoogleCalendar = async (req, res) => {
+  try {
+    const { code } = req.body;
+
+    if (!code) {
+      return res
+        .status(400)
+        .json({ message: "No authorisation code provided" });
+    }
+
+    const { tokens } = await oauth2Client.getToken(code);
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id,
+      {
+        googleConnected: true,
+        googleTokens: {
+          accessToken: tokens.access_token,
+          refreshToken: tokens.refresh_token,
+          expiryDate: tokens.expiry_date,
+        },
+      },
+      { new: true },
+    ).select("-password");
+
+    res.json(updatedUser);
+  } catch (error) {
+    console.error("Google Sync Error:", error);
+    res.status(500).json({ message: "Failed to connect to Google Calendar" });
+  }
+};
+
+const getGoogleEvents = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user || !user.googleConnected) {
+      return res.status(400).json({ message: "Google account not linked" });
+    }
+
+    oauth2Client.setCredentials({
+      access_token: user.googleTokens.accessToken,
+      refresh_token: user.googleTokens.refreshToken,
+    });
+
+    const calendar = google.calendar({ version: "v3", auth: oauth2Client });
+
+    const response = await calendar.events.list({
+      calendarId: "primary",
+      timeMin: new Date().toISOString(),
+      maxResults: 15,
+      singleEvents: true,
+      orderBy: "startTime",
+    });
+
+    res.json(response.data.items);
+  } catch (error) {
+    console.error("Fetch Events Error:", error);
+    res.status(500).json({ message: "Could not fetch calendar events" });
+  }
+};
+
 const registerUser = async (req, res) => {
   const { name, email, password } = req.body;
   const salt = await bcrypt.genSalt(10);
@@ -94,4 +163,6 @@ module.exports = {
   loginUser,
   getProfile,
   updateUserEnergy,
+  connectGoogleCalendar,
+  getGoogleEvents,
 };

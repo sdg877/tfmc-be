@@ -7,7 +7,18 @@ const userSchema = mongoose.Schema(
     password: { type: String, required: true },
     dailyEnergyLimit: { type: Number, default: 100 },
     lastResetDate: { type: String, default: "" },
-    settings: { showEnergyBar: { type: Boolean, default: true } },
+    settings: {
+      showEnergyBar: { type: Boolean, default: true },
+    },
+    googleConnected: {
+      type: Boolean,
+      default: false,
+    },
+    googleTokens: {
+      accessToken: String,
+      refreshToken: String,
+      expiryDate: Number,
+    },
   },
   { timestamps: true },
 );
