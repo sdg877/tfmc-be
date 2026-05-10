@@ -19,6 +19,13 @@ const userSchema = mongoose.Schema(
       refreshToken: String,
       expiryDate: Number,
     },
+    calendarMapping: [
+      {
+        keyword: { type: String },
+        points: { type: Number },
+        category: { type: String },
+      },
+    ],
   },
   { timestamps: true },
 );
