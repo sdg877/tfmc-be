@@ -16,6 +16,7 @@ const {
   addGoogleEvent,
   updateGoogleEvent,
   getDailyEnergyUsage,
+  deleteGoogleEvent
 } = require("../controllers/googleController");
 
 const {
@@ -37,6 +38,7 @@ router.get("/calendar-events", protect, getGoogleEvents);
 router.post("/calendar/add", protect, addGoogleEvent);
 router.put("/calendar/update", protect, updateGoogleEvent);
 router.get("/energy-usage", protect, getDailyEnergyUsage);
+router.delete("/calendar/event/:eventId", protect, deleteGoogleEvent);
 
 // --- Categories ---
 router.post("/categories", protect, addCategory);
