@@ -1,13 +1,17 @@
 const Task = require("../models/taskModel");
 const User = require("../models/userModel");
-const { deleteGoogleEvent } = require("./googleController");
+const googleController = require("./googleController");
 
-const getTasks = async (req, res) => {
-  const tasks = await Task.find({ user: req.user.id });
-  res.json(tasks);
+exports.getTasks = async (req, res) => {
+  try {
+    const tasks = await Task.find({ user: req.user.id });
+    res.json(tasks);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch tasks" });
+  }
 };
 
-const setTask = async (req, res) => {
+exports.setTask = async (req, res) => {
   try {
     const {
       title,
@@ -47,7 +51,7 @@ const setTask = async (req, res) => {
   }
 };
 
-const updateTask = async (req, res) => {
+exports.updateTask = async (req, res) => {
   try {
     const task = await Task.findById(req.params.id);
     if (!task) return res.status(404).json({ message: "Not found" });
@@ -69,35 +73,20 @@ const updateTask = async (req, res) => {
     const updatedTask = await task.save();
     res.json(updatedTask);
   } catch (error) {
-    console.error("Update Error:", error);
     res.status(500).json({ message: "Update failed" });
   }
 };
 
-const deleteTask = async (req, res) => {
+exports.deleteTask = async (req, res) => {
   try {
     const task = await Task.findById(req.params.id);
     if (!task) return res.status(404).json({ message: "Task not found" });
 
-    const user = await User.findById(req.user.id);
-
-    if (task.googleEventId && task.googleEventId.trim() !== "") {
-      try {
-        await deleteGoogleEvent(user, task.googleEventId);
-      } catch (err) {
-        console.error(
-          "Google delete failed (maybe event was already gone?):",
-          err.message,
-        );
-      }
-    }
-
     await task.deleteOne();
     res.json({ message: "Task removed" });
   } catch (error) {
-    console.error("Delete Error:", error);
-    res.status(500).json({ message: "Server error" });
+    if (!res.headersSent) {
+      res.status(500).json({ message: "Server error" });
+    }
   }
 };
-
-module.exports = { getTasks, setTask, updateTask, deleteTask };

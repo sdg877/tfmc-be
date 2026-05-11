@@ -115,12 +115,52 @@ exports.addGoogleEvent = async (req, res) => {
   }
 };
 
-// --- ADDED THIS TO PREVENT CRASH ---
 exports.updateGoogleEvent = async (req, res) => {
   try {
     res.status(200).json({ message: "Update placeholder" });
   } catch (error) {
     res.status(500).json({ message: "Update failed" });
+  }
+};
+
+exports.deleteGoogleEvent = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+
+    if (!eventId || eventId === "undefined" || eventId === "null") {
+      return res.status(200).json({ message: "No event ID to delete" });
+    }
+
+    const user = await User.findById(req.user.id);
+
+    if (!user || !user.googleTokens?.accessToken) {
+      return res.status(400).json({ message: "Google account not connected" });
+    }
+
+    oauth2Client.setCredentials({
+      access_token: user.googleTokens.accessToken,
+      refresh_token: user.googleTokens.refreshToken,
+    });
+
+    const calendar = google.calendar({ version: "v3", auth: oauth2Client });
+
+    await calendar.events.delete({
+      calendarId: "primary",
+      eventId: eventId,
+    });
+
+    return res
+      .status(200)
+      .json({ message: "Google event deleted successfully" });
+  } catch (error) {
+    if (error.code === 404 || error.code === 410) {
+      return res
+        .status(200)
+        .json({ message: "Event already gone from Google" });
+    }
+
+    console.error("Google Delete Error:", error.message);
+    return res.status(500).json({ message: "Failed to delete Google event" });
   }
 };
 
