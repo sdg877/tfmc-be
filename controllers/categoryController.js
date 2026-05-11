@@ -3,11 +3,22 @@ const User = require("../models/userModel");
 exports.addCategory = async (req, res) => {
   try {
     const { name, weight } = req.body;
+    
     const user = await User.findByIdAndUpdate(
       req.user.id,
-      { $push: { categories: { name, weight, isCustom: true } } },
+      { 
+        $push: { 
+          categories: { 
+            name, 
+            weight: Number(weight), 
+            isCustom: true 
+          } 
+        } 
+      },
       { new: true }
     );
+
+    if (!user) return res.status(404).json({ message: "User not found" });
     res.json(user.categories);
   } catch (error) {
     res.status(500).json({ message: "Failed to add category" });
@@ -17,12 +28,19 @@ exports.addCategory = async (req, res) => {
 exports.updateCategory = async (req, res) => {
   try {
     const { categoryId } = req.params;
-    const { weight } = req.body;
+    const { name, weight } = req.body;
+
+    const updateData = {};
+    if (name) updateData["categories.$.name"] = name;
+    if (weight !== undefined) updateData["categories.$.weight"] = Number(weight);
+
     const user = await User.findOneAndUpdate(
       { _id: req.user.id, "categories._id": categoryId },
-      { $set: { "categories.$.weight": weight } },
+      { $set: updateData },
       { new: true }
     );
+
+    if (!user) return res.status(404).json({ message: "User or category not found" });
     res.json(user.categories);
   } catch (error) {
     res.status(500).json({ message: "Update failed" });
