@@ -204,6 +204,38 @@ const addGoogleEvent = async (req, res) => {
   }
 };
 
+const updateGoogleEvent = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    const { eventId, title, startTime, endTime } = req.body;
+
+    if (!user || !user.googleConnected) {
+      return res.status(400).json({ message: "Google account not linked" });
+    }
+
+    oauth2Client.setCredentials({
+      refresh_token: user.googleTokens.refreshToken,
+    });
+
+    const calendar = google.calendar({ version: "v3", auth: oauth2Client });
+
+    await calendar.events.patch({
+      calendarId: "primary",
+      eventId: eventId,
+      resource: {
+        summary: title,
+        start: { dateTime: startTime, timeZone: "Europe/London" },
+        end: { dateTime: endTime, timeZone: "Europe/London" },
+      },
+    });
+
+    res.json({ message: "Google event updated successfully" });
+  } catch (error) {
+    console.error("Google Update Error:", error);
+    res.status(500).json({ message: "Failed to update Google event" });
+  }
+};
+
 const getDailyEnergyUsage = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -283,7 +315,6 @@ const deleteGoogleEvent = async (user, googleEventId) => {
       calendarId: "primary",
       eventId: googleEventId,
     });
-
   } catch (err) {
     if (err.code === 404) {
       return;
@@ -357,4 +388,5 @@ module.exports = {
   getGoogleAuthUrl,
   disconnectGoogle,
   deleteGoogleEvent,
+  updateGoogleEvent,
 };

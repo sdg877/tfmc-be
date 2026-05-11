@@ -52,16 +52,21 @@ const updateTask = async (req, res) => {
     const task = await Task.findById(req.params.id);
     if (!task) return res.status(404).json({ message: "Not found" });
 
+    if (req.body.title !== undefined) task.title = req.body.title;
+    if (req.body.category !== undefined) task.category = req.body.category;
+    if (req.body.dueDate !== undefined) task.dueDate = req.body.dueDate;
+    if (req.body.notes !== undefined) task.notes = req.body.notes;
+
     if (req.body.googleEventId !== undefined) {
       task.googleEventId = req.body.googleEventId;
     }
+
     if (req.body.isCompleted !== undefined) {
       task.isCompleted = req.body.isCompleted;
       task.completedAt = req.body.isCompleted ? new Date() : null;
     }
 
     const updatedTask = await task.save();
-
     res.json(updatedTask);
   } catch (error) {
     console.error("Update Error:", error);
