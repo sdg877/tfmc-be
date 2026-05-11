@@ -2,7 +2,6 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const connectDB = require("./config/db");
-const { google } = require("googleapis");
 
 dotenv.config();
 
@@ -19,12 +18,6 @@ app.use(
 );
 
 app.use(express.json());
-
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URI,
-);
 
 app.use("/users", require("./routes/userRoutes"));
 app.use("/tasks", require("./routes/taskRoutes"));
