@@ -17,11 +17,10 @@ const taskSchema = mongoose.Schema(
     },
     energyRequired: {
       type: Number,
-      default: 3,
+      default: 0,
     },
     category: {
       type: String,
-      enum: ["admin", "physical", "social", "focus", "stress"],
       required: [true, "Please select a category"],
     },
     urgency: {
