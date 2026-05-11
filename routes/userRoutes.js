@@ -10,6 +10,7 @@ const {
   getDailyEnergyUsage,
   addGoogleEvent,
   updateUserProfile,
+  updateGoogleEvent
 } = require("../controllers/userController");
 const { protect } = require("../middleware/authMiddleware");
 
@@ -29,5 +30,6 @@ router.post("/sync-calendar", protect, connectGoogleCalendar);
 router.get("/calendar-events", protect, getGoogleEvents);
 router.post("/calendar/add", protect, addGoogleEvent);
 router.get("/energy-usage", protect, getDailyEnergyUsage);
+router.put("/calendar/update", protect, updateGoogleEvent);
 
 module.exports = router;
