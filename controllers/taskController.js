@@ -1,6 +1,6 @@
 const Task = require("../models/taskModel");
 const User = require("../models/userModel");
-const { deleteGoogleEvent } = require("./userController");
+const { deleteGoogleEvent } = require("./googleController");
 
 const getTasks = async (req, res) => {
   const tasks = await Task.find({ user: req.user.id });
