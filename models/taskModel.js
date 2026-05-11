@@ -43,6 +43,10 @@ const taskSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    googleEventId: {
+      type: String,
+      default: "",
+    },
   },
   {
     timestamps: true,
