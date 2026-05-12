@@ -34,6 +34,7 @@ const userSchema = mongoose.Schema(
         category: { type: String },
       },
     ],
+    useManualWeights: { type: Boolean, default: false },
     categories: {
       type: [
         {
