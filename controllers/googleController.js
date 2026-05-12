@@ -7,6 +7,26 @@ const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_REDIRECT_URI,
 );
 
+const setupGoogleAuth = (user, userId) => {
+  oauth2Client.setCredentials({
+    access_token: user.googleTokens.accessToken,
+    refresh_token: user.googleTokens.refreshToken,
+    expiry_date: user.googleTokens.expiryDate,
+  });
+
+  oauth2Client.removeAllListeners("tokens");
+  oauth2Client.on("tokens", async (tokens) => {
+    const update = {
+      "googleTokens.accessToken": tokens.access_token,
+      "googleTokens.expiryDate": tokens.expiry_date,
+    };
+    if (tokens.refresh_token) {
+      update["googleTokens.refreshToken"] = tokens.refresh_token;
+    }
+    await User.findByIdAndUpdate(userId, { $set: update });
+  });
+};
+
 exports.getGoogleAuthUrl = (req, res) => {
   const scopes = [
     "https://www.googleapis.com/auth/userinfo.profile",
@@ -32,22 +52,25 @@ exports.connectGoogleCalendar = async (req, res) => {
         .json({ message: "No authorisation code provided" });
 
     const { tokens } = await oauth2Client.getToken(code);
+    const currentUser = await User.findById(req.user.id);
 
     const updateData = {
       googleConnected: true,
       googleTokens: {
         accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token,
+        refreshToken:
+          tokens.refresh_token || currentUser.googleTokens?.refreshToken,
         expiryDate: tokens.expiry_date,
       },
     };
 
     const updatedUser = await User.findByIdAndUpdate(req.user.id, updateData, {
-      new: true,
+      returnDocument: "after",
     }).select("-password");
 
     res.json(updatedUser);
   } catch (error) {
+    console.error("Google Connect Error:", error);
     res.status(500).json({ message: "Failed to connect to Google Calendar" });
   }
 };
@@ -57,10 +80,7 @@ exports.getGoogleEvents = async (req, res) => {
     const user = await User.findById(req.user.id);
     if (!user || !user.googleConnected) return res.json([]);
 
-    oauth2Client.setCredentials({
-      access_token: user.googleTokens.accessToken,
-      refresh_token: user.googleTokens.refreshToken,
-    });
+    setupGoogleAuth(user, req.user.id);
 
     const calendar = google.calendar({ version: "v3", auth: oauth2Client });
     const response = await calendar.events.list({
@@ -73,6 +93,7 @@ exports.getGoogleEvents = async (req, res) => {
 
     res.json(response.data.items);
   } catch (error) {
+    console.error("Fetch Events Error:", error);
     res.status(500).json({ message: "Could not fetch events" });
   }
 };
@@ -84,11 +105,9 @@ exports.addGoogleEvent = async (req, res) => {
       return res.status(400).json({ message: "Google Calendar not connected" });
     }
 
-    const { title, description, startTime, endTime } = req.body;
+    setupGoogleAuth(user, req.user.id);
 
-    oauth2Client.setCredentials({
-      refresh_token: user.googleTokens.refreshToken,
-    });
+    const { title, description, startTime, endTime } = req.body;
     const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
     const event = {
@@ -111,39 +130,57 @@ exports.addGoogleEvent = async (req, res) => {
     if (error.code === 401 || error.response?.data?.error === "invalid_grant") {
       await User.findByIdAndUpdate(req.user.id, { googleConnected: false });
     }
+    console.error("Add Event Error:", error);
     res.status(500).json({ message: "Sync failed" });
   }
 };
 
 exports.updateGoogleEvent = async (req, res) => {
   try {
-    res.status(200).json({ message: "Update placeholder" });
+    const user = await User.findById(req.user.id);
+    if (!user || !user.googleConnected) {
+      return res.status(400).json({ message: "Google account not connected" });
+    }
+
+    setupGoogleAuth(user, req.user.id);
+
+    const { eventId, title, description, startTime, endTime } = req.body;
+    const calendar = google.calendar({ version: "v3", auth: oauth2Client });
+
+    const response = await calendar.events.patch({
+      // Use patch to only update changed fields
+      calendarId: "primary",
+      eventId: eventId,
+      resource: {
+        summary: title,
+        description: description,
+        start: { dateTime: startTime, timeZone: "Europe/London" },
+        end: { dateTime: endTime, timeZone: "Europe/London" },
+      },
+    });
+
+    res.status(200).json(response.data);
   } catch (error) {
-    res.status(500).json({ message: "Update failed" });
+    console.error("Google Update Error:", error);
+    res.status(500).json({ message: "Failed to update Google event" });
   }
 };
 
 exports.deleteGoogleEvent = async (req, res) => {
   try {
     const { eventId } = req.params;
-
     if (!eventId || eventId === "undefined" || eventId === "null") {
       return res.status(200).json({ message: "No event ID to delete" });
     }
 
     const user = await User.findById(req.user.id);
-
-    if (!user || !user.googleTokens?.accessToken) {
+    if (!user || !user.googleConnected) {
       return res.status(400).json({ message: "Google account not connected" });
     }
 
-    oauth2Client.setCredentials({
-      access_token: user.googleTokens.accessToken,
-      refresh_token: user.googleTokens.refreshToken,
-    });
+    setupGoogleAuth(user, req.user.id);
 
     const calendar = google.calendar({ version: "v3", auth: oauth2Client });
-
     await calendar.events.delete({
       calendarId: "primary",
       eventId: eventId,
@@ -158,7 +195,6 @@ exports.deleteGoogleEvent = async (req, res) => {
         .status(200)
         .json({ message: "Event already gone from Google" });
     }
-
     console.error("Google Delete Error:", error.message);
     return res.status(500).json({ message: "Failed to delete Google event" });
   }
@@ -170,10 +206,7 @@ exports.getDailyEnergyUsage = async (req, res) => {
     if (!user || !user.googleConnected)
       return res.json({ googleEnergyDrain: 0 });
 
-    oauth2Client.setCredentials({
-      access_token: user.googleTokens.accessToken,
-      refresh_token: user.googleTokens.refreshToken,
-    });
+    setupGoogleAuth(user, req.user.id);
 
     const calendar = google.calendar({ version: "v3", auth: oauth2Client });
     const startOfDay = new Date();
@@ -209,6 +242,7 @@ exports.getDailyEnergyUsage = async (req, res) => {
 
     res.json({ googleEnergyDrain: googleDrain, eventCount: events.length });
   } catch (error) {
+    console.error("Energy Usage Error:", error);
     res.status(500).json({ message: "Error calculating energy" });
   }
 };
