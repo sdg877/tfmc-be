@@ -28,20 +28,20 @@ exports.getProfile = async (req, res) => {
 };
 
 exports.updateUserProfile = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ msg: "User not found" });
+  const user = await User.findById(req.user.id);
 
-    if (req.body.name) user.name = req.body.name;
-    if (req.body.email) user.email = req.body.email;
+  if (user) {
+    user.name = req.body.name || user.name;
+    user.email = req.body.email || user.email;
+    user.useManualWeights =
+      req.body.useManualWeights !== undefined
+        ? req.body.useManualWeights
+        : user.useManualWeights;
 
-    await user.save();
-    const updatedUser = await User.findById(req.user.id)
-      .select("-password")
-      .lean();
-    return res.status(200).json(updatedUser);
-  } catch (err) {
-    return res.status(500).json({ msg: "Server Error" });
+    const updatedUser = await user.save();
+    res.json(updatedUser);
+  } else {
+    res.status(404).json({ message: "User not found" });
   }
 };
 
