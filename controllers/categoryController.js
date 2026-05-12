@@ -64,13 +64,12 @@ exports.deleteCategory = async (req, res) => {
 };
 
 exports.resetCategories = async (req, res) => {
-  // Using your exact defaults from the User model
   const defaultCategories = [
-    { name: "Admin", weight: 10 },
-    { name: "Physical", weight: 20 },
-    { name: "Social", weight: 30 },
-    { name: "Focus", weight: 40 },
-    { name: "Stress", weight: 45 },
+    { name: "Social", weight: 10 },
+    { name: "Physical", weight: 15 },
+    { name: "Admin", weight: 20 },
+    { name: "Focus", weight: 25 },
+    { name: "Stress", weight: 35 },
   ];
 
   try {

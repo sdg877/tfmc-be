@@ -1,11 +1,11 @@
 const mongoose = require("mongoose");
 
 const defaultCategories = [
-  { name: "admin", weight: 10 },
-  { name: "physical", weight: 20 },
-  { name: "social", weight: 30 },
-  { name: "focus", weight: 40 },
-  { name: "stress", weight: 45 },
+  { name: "Social", weight: 10 },
+  { name: "Physical", weight: 15 },
+  { name: "Admin", weight: 20 },
+  { name: "Focus", weight: 25 },
+  { name: "Stress", weight: 35 },
 ];
 
 const userSchema = mongoose.Schema(
