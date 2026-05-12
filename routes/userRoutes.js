@@ -16,13 +16,14 @@ const {
   addGoogleEvent,
   updateGoogleEvent,
   getDailyEnergyUsage,
-  deleteGoogleEvent
+  deleteGoogleEvent,
 } = require("../controllers/googleController");
 
 const {
   addCategory,
   updateCategory,
   deleteCategory,
+  resetCategories,
 } = require("../controllers/categoryController");
 
 // --- Auth ---
@@ -44,5 +45,6 @@ router.delete("/calendar/event/:eventId", protect, deleteGoogleEvent);
 router.post("/categories", protect, addCategory);
 router.put("/categories/:categoryId", protect, updateCategory);
 router.delete("/categories/:categoryId", protect, deleteCategory);
+router.post("/categories/reset", protect, resetCategories);
 
 module.exports = router;
