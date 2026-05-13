@@ -60,6 +60,10 @@ exports.updateTask = async (req, res) => {
     if (req.body.category !== undefined) task.category = req.body.category;
     if (req.body.dueDate !== undefined) task.dueDate = req.body.dueDate;
     if (req.body.notes !== undefined) task.notes = req.body.notes;
+    if (req.body.urgency !== undefined) task.urgency = req.body.urgency;
+    if (req.body.isStarred !== undefined) task.isStarred = req.body.isStarred;
+    if (req.body.isPlannedForToday !== undefined)
+      task.isPlannedForToday = req.body.isPlannedForToday;
 
     if (req.body.googleEventId !== undefined) {
       task.googleEventId = req.body.googleEventId;
