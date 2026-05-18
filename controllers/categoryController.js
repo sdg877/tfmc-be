@@ -15,7 +15,7 @@ exports.addCategory = async (req, res) => {
           },
         },
       },
-      { new: true },
+      { returnDocument: "after" },
     );
 
     if (!user) return res.status(404).json({ message: "User not found" });
@@ -38,7 +38,7 @@ exports.updateCategory = async (req, res) => {
     const user = await User.findOneAndUpdate(
       { _id: req.user.id, "categories._id": categoryId },
       { $set: updateData },
-      { new: true },
+      { returnDocument: "after" },
     );
 
     if (!user)
@@ -55,7 +55,7 @@ exports.deleteCategory = async (req, res) => {
     const user = await User.findByIdAndUpdate(
       req.user.id,
       { $pull: { categories: { _id: categoryId } } },
-      { new: true },
+      { returnDocument: "after" },
     );
     res.json(user.categories);
   } catch (error) {
@@ -76,7 +76,7 @@ exports.resetCategories = async (req, res) => {
     const user = await User.findByIdAndUpdate(
       req.user.id,
       { $set: { categories: defaultCategories } },
-      { new: true },
+      { returnDocument: "after" },
     );
 
     if (!user) return res.status(404).json({ message: "User not found" });
