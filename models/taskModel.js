@@ -1,61 +1,3 @@
-// const mongoose = require("mongoose");
-
-// const taskSchema = mongoose.Schema(
-//   {
-//     user: {
-//       type: mongoose.Schema.Types.ObjectId,
-//       required: true,
-//       ref: "User",
-//     },
-//     title: {
-//       type: String,
-//       required: [true, "Please add a title"],
-//     },
-//     notes: {
-//       type: String,
-//       default: "",
-//     },
-//     energyRequired: {
-//       type: Number,
-//       default: 0,
-//     },
-//     category: {
-//       type: String,
-//       required: [true, "Please select a category"],
-//     },
-//     urgency: {
-//       type: String,
-//       enum: ["later", "soon", "now"],
-//       default: "soon",
-//     },
-//     dueDate: {
-//       type: Date,
-//     },
-//     isCompleted: {
-//       type: Boolean,
-//       default: false,
-//     },
-//     completedAt: {
-//       type: Date,
-//     },
-//     isPlannedForToday: {
-//       type: Boolean,
-//       default: false,
-//     },
-//     googleEventId: {
-//       type: String,
-//       default: "",
-//     },
-//   },
-//   {
-//     timestamps: true,
-//   },
-// );
-
-// module.exports = mongoose.model("Task", taskSchema);
-
-
-// models/taskModel.js
 const mongoose = require("mongoose");
 
 const taskSchema = mongoose.Schema(
@@ -104,14 +46,13 @@ const taskSchema = mongoose.Schema(
       type: String,
       default: "",
     },
-    // --- NEW RECURRING FIELDS ---
     isRecurring: {
       type: Boolean,
       default: false,
     },
     recurrence: {
       type: String,
-      enum: ["none", "daily", "weekly", "monthly"],
+      enum: ["none", "daily", "weekly", "fortnightly", "monthly", "quarterly"],
       default: "none",
     },
   },
