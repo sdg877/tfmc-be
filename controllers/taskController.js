@@ -56,13 +56,10 @@ exports.setTask = async (req, res) => {
   }
 };
 
-// Handle cloning upon completion with extended presets
 exports.updateTask = async (req, res) => {
   try {
     const task = await Task.findById(req.params.id);
     if (!task) return res.status(404).json({ message: "Not found" });
-
-    // Handle standard field updates
     if (req.body.title !== undefined) task.title = req.body.title;
     if (req.body.category !== undefined) task.category = req.body.category;
     if (req.body.dueDate !== undefined) task.dueDate = req.body.dueDate;
@@ -77,13 +74,11 @@ exports.updateTask = async (req, res) => {
     if (req.body.recurrence !== undefined)
       task.recurrence = req.body.recurrence;
 
-    // Handle completion logic
     if (req.body.isCompleted !== undefined) {
       const wasCompleted = task.isCompleted;
       task.isCompleted = req.body.isCompleted;
       task.completedAt = req.body.isCompleted ? new Date() : null;
 
-      // If it's turning from uncompleted -> completed AND it is recurring
       if (
         !wasCompleted &&
         task.isCompleted &&
@@ -92,7 +87,6 @@ exports.updateTask = async (req, res) => {
       ) {
         let nextDueDate = task.dueDate ? new Date(task.dueDate) : new Date();
 
-        // Extended preset calculations
         if (task.recurrence === "daily") {
           nextDueDate.setDate(nextDueDate.getDate() + 1);
         } else if (task.recurrence === "weekly") {
@@ -105,7 +99,6 @@ exports.updateTask = async (req, res) => {
           nextDueDate.setMonth(nextDueDate.getMonth() + 3);
         }
 
-        // Spawn the next iteration automatically
         await Task.create({
           user: task.user,
           title: task.title,
