@@ -35,6 +35,7 @@ const userSchema = mongoose.Schema(
       },
     ],
     useManualWeights: { type: Boolean, default: false },
+    holidays: { type: [String], default: [] },
     categories: {
       type: [
         {
