@@ -8,6 +8,8 @@ const {
   getProfile,
   updateUserProfile,
   updateUserEnergy,
+  getHolidays,
+  updateHolidays
 } = require("../controllers/authController");
 
 const {
@@ -48,5 +50,9 @@ router.post("/categories", protect, addCategory);
 router.put("/categories/:categoryId", protect, updateCategory);
 router.delete("/categories/:categoryId", protect, deleteCategory);
 router.post("/categories/reset", protect, resetCategories);
+
+// -- Holiday Mode --
+router.get("/holidays", protect, getHolidays);
+router.put("/holidays", protect, updateHolidays);
 
 module.exports = router;
