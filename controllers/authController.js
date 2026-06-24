@@ -120,3 +120,40 @@ exports.loginUser = async (req, res) => {
     res.status(401).json({ message: "Invalid credentials" });
   }
 };
+
+const getHolidays = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.json({ holidays: user.holidays || [] });
+  } catch (err) {
+    res.status(500).json({ message: "Server error fetching holidays" });
+  }
+};
+exports.getHolidays = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.json({ holidays: user.holidays || [] });
+  } catch (err) {
+    res.status(500).json({ message: "Server error fetching holidays" });
+  }
+};
+
+exports.updateHolidays = async (req, res) => {
+  try {
+    const { holidays } = req.body;
+
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.holidays = holidays;
+    await user.save();
+
+    res.json({ holidays: user.holidays });
+  } catch (err) {
+    res.status(500).json({ message: "Server error saving holidays" });
+  }
+};
