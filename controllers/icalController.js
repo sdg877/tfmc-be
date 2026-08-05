@@ -3,9 +3,11 @@ const ical = require("node-ical");
 
 exports.connectIcal = async (req, res) => {
   try {
-    const { icalUrl } = req.body;
+    let { icalUrl } = req.body;
     if (!icalUrl)
       return res.status(400).json({ message: "No iCal URL provided" });
+
+    icalUrl = icalUrl.replace(/^webcal:\/\//i, "https://");
 
     const events = await ical.async.fromURL(icalUrl);
     if (!events)
@@ -20,9 +22,11 @@ exports.connectIcal = async (req, res) => {
     res.json(user);
   } catch (err) {
     console.error("iCal Connect Error:", err);
-    res.status(500).json({
-      message: "Failed to connect iCal feed. Check the URL is valid.",
-    });
+    res
+      .status(500)
+      .json({
+        message: "Failed to connect iCal feed. Check the URL is valid.",
+      });
   }
 };
 
@@ -41,6 +45,7 @@ exports.disconnectIcal = async (req, res) => {
   }
 };
 
+// Get today's iCal events
 exports.getIcalEvents = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -76,6 +81,7 @@ exports.getIcalEvents = async (req, res) => {
   }
 };
 
+// Get all upcoming iCal events (for calendar view)
 exports.getIcalCalendarEvents = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -110,6 +116,7 @@ exports.getIcalCalendarEvents = async (req, res) => {
   }
 };
 
+// Calculate energy drain from today's iCal events (mirrors getDailyEnergyUsage)
 exports.getIcalEnergyUsage = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
